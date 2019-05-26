@@ -23,7 +23,6 @@ var jsonWrite = function (res, ret) {
 router.post('/addUser', (req, res) => {
   let sql = $sql.user.add
   let params = req.body
-  console.log(params)
   conn.query(sql, [params.username, params.password], (err, result) => {
     if (err) {
       jsonWrite(res, err)
@@ -37,7 +36,6 @@ router.post('/addUser', (req, res) => {
 router.post('/login', (req, res) => {
   let sql = $sql.user.login
   let params = req.body
-  console.log(params)
   conn.query(sql, [params.username, params.password], (err, result) => {
     if (err) {
       console.log(err)

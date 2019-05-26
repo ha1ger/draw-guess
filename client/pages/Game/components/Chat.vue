@@ -84,8 +84,8 @@ export default {
       width: 13%;
       background: rgb(130, 224, 255);
       border: 1px solid rgb(130, 224, 255);
-      border-radius: 6px;
-      margin-left: 0.5%;
+      border-radius: 13px;
+      margin-left: 1%;
       margin-right: 0.5%;
     }
   }

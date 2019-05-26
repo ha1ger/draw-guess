@@ -17,7 +17,7 @@ Vue.use(layer)
 Vue.use(
   new VueSocketIO({
     debug: false,
-    connection: 'http://haiger.club:3000',
+    connection: 'http://127.0.0.1:3000',
     vuex: {
       store,
       actionPrefix: 'SOCKET_',

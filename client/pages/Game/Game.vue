@@ -175,7 +175,7 @@ export default {
     },
     stopGame (roomID) {
       this.$router.push('/room')
-      this.$socket.emit('playerOut')
+      this.$socket.emit('leave')
       this.$layer.dialog({
         content: '有玩家中途退出，请重新创建房间开始游戏',
         btn: ['我知道了']
@@ -190,6 +190,7 @@ export default {
       })
       this.$router.push('/')
     }
+    this.$socket.emit('join', this.username)
   }
 }
 </script>
@@ -237,6 +238,8 @@ export default {
       letter-spacing: 2px;
       font-family: YouYuan;
       padding-left: 3px;
+      border-radius: 3px;
+      font-weight: 500;
     }
   }
 

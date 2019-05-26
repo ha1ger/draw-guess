@@ -43,7 +43,6 @@ router.post('/joinRoom', (req, res) => {
       console.log(err)
     }
     if (result) {
-      console.log(result)
       if (result[0]) {
         if (result[0].onGaming === 1) {
           console.log('正在游戏')

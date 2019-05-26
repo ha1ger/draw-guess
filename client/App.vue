@@ -28,4 +28,8 @@ export default {
   fill: currentColor;
   overflow: hidden;
 }
+#app {
+  height: 100%;
+  width: 100%;
+}
 </style>

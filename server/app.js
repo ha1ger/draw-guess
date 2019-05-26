@@ -1,16 +1,13 @@
-﻿var userApi = require('./api/userApi')
-var roomApi = require('./api/roomApi')
-var fs = require('fs')
-var path = require('path')
-var bodyParser = require('body-parser')
-var express = require('express')
-var app = express()
-var server = require('http').Server(app)
-var io = require('socket.io')(server)
-var router = express.Router()
-var models = require('./db')
-var mysql = require('mysql')
-var $sql = require('./sqlMap')
+﻿const userApi = require('./api/userApi')
+const roomApi = require('./api/roomApi')
+const bodyParser = require('body-parser')
+const express = require('express')
+const app = express()
+const server = require('http').Server(app)
+const io = require('socket.io')(server)
+const models = require('./db')
+const mysql = require('mysql')
+const $sql = require('./sqlMap')
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 // 数据库连接
@@ -19,13 +16,11 @@ conn.connect()
 // 后端api路由
 app.use('/api/user', userApi)
 app.use('/api/room', roomApi)
-app.use('/', router)
 
 var roomInfo = {}
 var prop = []
 var guessname = []
 var socreDrawer = []
-
 
 io.on('connection', socket => {
   var beginFlag = false
@@ -63,9 +58,6 @@ io.on('connection', socket => {
       socket.on('leave', () => {
         socket.emit('disconnect')
       })
-      socket.on('playerOut', () => {
-        socket.emit('disconnect')
-      })
       socket.on('disconnect', () => {
         var index = roomInfo[roomID].indexOf(user)
         if (index !== -1) {
@@ -80,7 +72,7 @@ io.on('connection', socket => {
           if (err) {
             console.log(err)
           }
-          if (result) {
+          if (result[0] !== undefined) {
             gaming = result[0].onGaming
             if (gaming) {
               io.in(roomID).emit('clickReset')
@@ -107,7 +99,6 @@ io.on('connection', socket => {
       })
     }
   })
-
   // 聊天窗
   socket.on('sendMsg', (msguser, msg) => {
     if (msg === guessname[roomID]) {
@@ -119,11 +110,32 @@ io.on('connection', socket => {
       io.in(roomID).emit('getMsg', msguser, msg, 'black')
     }
   })
+  // 换题
+  socket.on('changeGuess', drawerName => {
+    let sql = $sql.game.getGuess
+    conn.query(sql, roomInfo[roomID].length, (err, result) => {
+      if (err) {
+        console.log(err)
+      }
+      if (result) {
+        guessname[roomID] = result[0].guessName
+        guesstip = result[0].guessTip
+        guesslength = result[0].guessLength
+        io.in(roomID).emit('sendGuess', drawerName, guessname[roomID])
+        io.in(roomID).emit('sendLength', guesslength)
+        io.in(roomID).emit('sendTip', '')
+        io.in(roomID).emit('sysMsg', drawerName + '更换了题目')
+        setTimeout(() => {
+          io.in(roomID).emit('sendTip', guesstip)
+        }, 5000)
+      }
+    })
+  })
   // 开始游戏↓↓↓
   socket.on('beginGame', () => {
-    beginFlag = true
-    io.in(roomID).emit('closeSettlement')
     if (roomInfo[roomID].length > 1) {
+      io.in(roomID).emit('closeSettlement')
+      beginFlag = true
       io.in(roomID).emit('showIn5')
       io.in(roomID).emit('stopWrite', roomInfo[roomID][0])
       let sql = $sql.room.beginGame
@@ -142,7 +154,6 @@ io.on('connection', socket => {
             roomInfo[roomID][0],
             guessname[roomID]
           )
-          console.log(result[0])
         }
       })
       for (let i = 0; i < roomInfo[roomID].length + 1; i++) {
@@ -185,7 +196,7 @@ io.on('connection', socket => {
     } else {
       console.log('人数不足')
     }
-    var firstDrawer = (drawer, i) => {
+    var firstDrawer = drawer => {
       prop[roomID] = { flower: 0, egg: 0, slipper: 0, heart: 0, six: 0 }
       io.in(roomID).emit('changeProp', prop[roomID])
       io.in(roomID).emit('clickReset')
@@ -202,11 +213,11 @@ io.on('connection', socket => {
       setTimeout(() => {
         io.in(roomID).emit('sendTip', guesstip)
       }, 15000)
-    
+
       setTimeout(() => {
         io.in(roomID).emit('sysMsg', drawer + '画的题目是' + guessname[roomID])
       }, 64900)
-}
+    }
     var nextDrawer = (drawer, i) => {
       io.in(roomID).emit('clearTimer')
       io.in(roomID).emit('clickReset')
@@ -264,7 +275,7 @@ io.on('connection', socket => {
       }, 5000)
     }
   })
-  // 道具
+  // 玩家评价
 
   socket.on('getProp', getprop => {
     if (getprop.flower) {
@@ -280,6 +291,7 @@ io.on('connection', socket => {
     }
     io.in(roomID).emit('changeProp', prop[roomID])
   })
+  // 画图事件
   socket.on('beginDraw', (startX, startY, lineColor, lineWidth) => {
     io.in(roomID).emit('beginDraw', startX, startY, lineColor, lineWidth)
   })
@@ -289,19 +301,13 @@ io.on('connection', socket => {
   socket.on('endDrawing', () => {
     io.in(roomID).emit('endDrawing')
   })
+  // 清空画板
   socket.on('clearC', () => {
     io.in(roomID).emit('clearCanvas')
   })
 })
 
-
-app.use(express.static(path.resolve(__dirname, './../dist')))
+// app.use(express.static(path.resolve(__dirname, './../dist')))
 server.listen(3000, () => {
   console.log('success listen at port:3000......')
 })
-
-
-io.listen(8080, () => {
-  console.log('success listen at port:8080......')
-})
-module.exports = router

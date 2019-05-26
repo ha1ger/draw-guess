@@ -34,6 +34,8 @@
         <span class="guess-name"> {{this.guessName}}</span>
         <button class="clear-button"
                 @click="handleClaerCanvas">清空</button>
+        <button class="change-button"
+                @click="handlechangeGuess">换题</button>
       </div>
     </div>
   </div>
@@ -44,7 +46,7 @@ export default {
   name: 'DrawBoard',
   data () {
     return {
-      color: ['#FF0000', '#FF7D00', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#000000'],
+      color: ['#FF0000', '#FF7D00', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#000000', '#ffffff'],
       brushes: [{
         x: 3.5,
         lineWidth: 3
@@ -64,7 +66,8 @@ export default {
       startY: 0,
       drawing: false,
       canvas: {},
-      guessName: ''
+      guessName: '',
+      changeFlag: 0
     }
   },
   computed: {
@@ -76,6 +79,17 @@ export default {
     },
     setBrush (width) {
       this.config.lineWidth = width
+    },
+    handlechangeGuess () {
+      if (!this.changeFlag) {
+        this.$socket.emit('changeGuess', this.username)
+        this.changeFlag = 1
+      } else {
+        this.$layer.toast({
+          content: '只能换一次题目哦',
+          time: 2000
+        })
+      }
     },
     handleTouchStart (e) {
       this.drawing = true
@@ -124,6 +138,11 @@ export default {
     clearCanvas () {
       this.clear()
     },
+    openWriter (drawer) {
+      if (this.username === drawer) {
+        this.changeFlag = 0
+      }
+    },
     sendGuess (guessMsg) {
       if (guessMsg[0] === this.username) {
         this.guessName = guessMsg[1]
@@ -134,7 +153,6 @@ export default {
     this.canvas = document.querySelector('.canvas')
     this.ctx = this.canvas.getContext('2d')
     this.$socket.emit('getRoom', this.roomID)
-    this.$socket.emit('join', this.username)
     this.canvas.addEventListener('touchmove', (e) => {
       e.preventDefault()
       e.stopPropagation()
@@ -173,17 +191,37 @@ export default {
 
       .guess-name {
         position: absolute;
-        top: 46px;
+        top: 48px;
         right: 100px;
         font-size: 16px;
         font-weight: bold;
         color: red;
       }
 
-      .clear-button {
+      .change-button {
+        color: #000000;
+        font-family: YouYuan;
+        font-size: 14px;
+        background-color: cyan;
+        width: 35px;
+        height: 25px;
+        border-radius: 7px;
         position: absolute;
-        top: 46px;
-        right: 20px;
+        top: 45px;
+        right: 10px;
+      }
+
+      .clear-button {
+        color: #000000;
+        font-family: YouYuan;
+        font-size: 14px;
+        background: pink;
+        border-radius: 7px;
+        width: 35px;
+        height: 25px;
+        position: absolute;
+        top: 4px;
+        right: 10px;
       }
 
       ul {
@@ -225,12 +263,17 @@ export default {
           margin-top: 3px;
         }
 
+        li:last-child {
+          border: 1px solid red;
+        }
+
         li {
           margin-left: 3%;
           margin-top: 8px;
           float: left;
-          width: 25px;
+          width: 23px;
           height: 40%;
+          border-radius: 3px;
         }
       }
     }
